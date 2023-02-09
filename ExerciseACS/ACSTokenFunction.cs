@@ -7,6 +7,7 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Azure.Communication.Identity;
 
 namespace ExerciseACS
 {
@@ -17,19 +18,12 @@ namespace ExerciseACS
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
+            var connectionString = Environment.GetEnvironmentVariable("ACS_CONNECTION_STRING");
+            var tokenClient = new CommunicationIdentityClient(connectionString);
+            var user = await tokenClient.CreateUserAsync();
+            var userToken = await tokenClient.GetTokenAsync(user, new[] { CommunicationTokenScope.VoIP });
 
-            string name = req.Query["name"];
-
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
-
-            string responseMessage = string.IsNullOrEmpty(name)
-                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : $"Hello, {name}. This HTTP triggered function executed successfully.";
-
-            return new OkObjectResult(responseMessage);
+            return new OkObjectResult(new { userId = user.Value.Id, userToken.Value.Token, userToken.Value.ExpiresOn });
         }
     }
 }
