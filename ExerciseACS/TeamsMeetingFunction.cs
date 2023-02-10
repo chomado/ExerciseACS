@@ -38,6 +38,6 @@ public static class TeamsMeetingFunction
             End = new() { DateTime = DateTime.UtcNow.AddHours(1).ToString("yyyy-MM-ddTHH:mm:ss"), TimeZone = "UTC" },
             IsOnlineMeeting = true
         });
-        return new OkObjectResult(newEvent);
+        return new OkObjectResult(newEvent.OnlineMeeting.JoinUrl);
     }
 }
